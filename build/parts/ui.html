@@ -1,0 +1,368 @@
+<canvas id="view"></canvas>
+
+<!-- HUD：pointer-events:none，全部为透视信息（规格书 §2/§7） -->
+<div id="hud" aria-hidden="true">
+  <div class="hud-left">
+    <div class="hud-scores">
+      <div class="hud-stat">
+        <span class="hud-label">SCORE</span>
+        <span class="hud-value" id="hud-score">0000000</span>
+      </div>
+      <div class="hud-stat hud-stat-hi">
+        <span class="hud-label">HI-SCORE</span>
+        <span class="hud-value" id="hud-hiscore">0000000</span>
+      </div>
+    </div>
+    <div class="hud-fire">
+      <span class="hud-label">火力</span>
+      <span class="fire-stars" id="hud-fire"></span>
+    </div>
+  </div>
+
+  <aside class="hud-right" aria-label="战场信息">
+    <div class="hud-section">
+      <div class="hud-section-head">
+        <span class="hud-label">ENEMY</span>
+        <span class="hud-count" id="hud-enemy-count">20</span>
+      </div>
+      <div class="enemy-grid" id="hud-enemy-grid" aria-hidden="true"></div>
+    </div>
+
+    <div class="hud-section">
+      <div class="hud-section-head"><span class="hud-label">道具</span></div>
+      <div class="hud-powerups empty" id="hud-powerups"></div>
+    </div>
+
+    <div class="hud-section">
+      <div class="hud-section-head"><span class="hud-label">生命</span></div>
+      <div class="hud-lives" id="hud-lives">
+        <svg class="life-tank" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.4 10.4h17.2v5.2H3.4z"/><path d="M8.4 10.4V7.4h7.2v3z"/><path d="M15.6 8.3h5.8v1.8h-5.8z"/><rect x="1.6" y="15.6" width="20.8" height="2.8" rx="1.2"/></svg>
+        <span class="life-mult">×</span>
+        <span class="life-count" id="hud-lives-count">3</span>
+      </div>
+      <div class="hud-lives hud-lives-duo is-hidden" id="hud-lives-duo">
+        <span class="life-line"><span class="life-tag">P1</span><span class="life-count" id="hud-lives-p1-count">3</span></span>
+        <span class="life-line"><span class="life-tag">P2</span><span class="life-count" id="hud-lives-p2-count">3</span></span>
+      </div>
+    </div>
+
+    <div class="hud-stage">
+      <span class="stage-flag">
+        <span class="stage-label">STAGE</span>
+        <span class="stage-num" id="hud-stage">1</span>
+      </span>
+    </div>
+  </aside>
+</div>
+
+<!-- CRT：扫描线 8% + 暗角 + 轻边缘色散（规格书 §4/§7） -->
+<div id="crt" aria-hidden="true">
+  <div class="crt-vignette"></div>
+  <div class="crt-lines"></div>
+  <div class="crt-edge"></div>
+</div>
+
+<div id="flash-white" aria-hidden="true"></div>
+<div id="flash-red" aria-hidden="true"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ============================ LOADING ============================ -->
+<section id="screen-loading" class="screen active locked" aria-hidden="false">
+  <div class="loading-wrap">
+    <svg class="loading-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <rect x="6" y="30" width="52" height="14" rx="4"></rect>
+      <rect x="18" y="18" width="24" height="12" rx="3"></rect>
+      <rect x="38" y="21" width="22" height="6" rx="3"></rect>
+      <rect x="2" y="44" width="60" height="9" rx="4.5"></rect>
+    </svg>
+    <h1 class="loading-title">BATTLE CITY 3D</h1>
+    <p class="loading-cn">坦克大战 3D</p>
+    <div class="loading-bar" id="loading-bar" role="progressbar" aria-label="加载进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="loading-fill" id="loading-fill"></div>
+    </div>
+    <div class="loading-meta">
+      <span id="loading-status">准备加载</span>
+      <span id="loading-percent">0%</span>
+    </div>
+    <p class="loading-hint" id="loading-hint">点击或按任意键解锁音频</p>
+  </div>
+</section>
+
+<!-- ============================= TITLE ============================= -->
+<section id="screen-title" class="screen title-screen" aria-hidden="true">
+  <div class="title-top">
+    <div class="title-logo">
+      <div class="logo-line logo-line-main">
+        <span class="logo-off-a" aria-hidden="true">BATTLE CITY</span>
+        <span class="logo-off-b" aria-hidden="true">BATTLE CITY</span>
+        <span class="logo-fill">BATTLE CITY</span>
+      </div>
+      <div class="logo-line logo-line-3d">
+        <span class="logo-off-a" aria-hidden="true">3D</span>
+        <span class="logo-off-b" aria-hidden="true">3D</span>
+        <span class="logo-fill">3D</span>
+      </div>
+      <div class="logo-cn">坦克大战</div>
+    </div>
+  </div>
+
+  <nav class="menu title-menu" id="title-menu" aria-label="主菜单">
+    <button type="button" class="menu-item" data-action="single">
+      <span class="cursor" aria-hidden="true">▶</span>
+      <span class="menu-label">单人游戏</span>
+      <span class="menu-en">1 PLAYER</span>
+    </button>
+    <button type="button" class="menu-item" data-action="duo">
+      <span class="cursor" aria-hidden="true">▶</span>
+      <span class="menu-label">双人游戏</span>
+      <span class="menu-en">2 PLAYERS</span>
+    </button>
+    <button type="button" class="menu-item" data-action="help">
+      <span class="cursor" aria-hidden="true">▶</span>
+      <span class="menu-label">操作说明</span>
+      <span class="menu-en">HOW TO PLAY</span>
+    </button>
+    <button type="button" class="menu-item" data-action="settings">
+      <span class="cursor" aria-hidden="true">▶</span>
+      <span class="menu-label">设置</span>
+      <span class="menu-en">SETTINGS</span>
+    </button>
+  </nav>
+
+  <footer class="title-foot">
+    <div class="hi-row">
+      <span class="hi-label">HI-SCORE</span>
+      <span class="hi-value" id="title-hiscore">0000000</span>
+    </div>
+    <div class="title-hint">
+      <kbd>↑</kbd><kbd>↓</kbd> 选择 <span class="hint-dot">·</span> <kbd>Enter</kbd> 确认
+    </div>
+  </footer>
+</section>
+
+<!-- ============================= HELP ============================== -->
+<section id="screen-help" class="screen overlay" aria-hidden="true">
+  <div class="panel help-panel" role="dialog" aria-modal="true" aria-label="操作说明">
+    <header class="panel-head">
+      <div>
+        <h2 class="panel-title">操作说明</h2>
+        <span class="panel-sub">HOW TO PLAY</span>
+      </div>
+      <span class="panel-rule" aria-hidden="true"></span>
+    </header>
+
+    <div class="help-grid">
+      <div class="help-col">
+        <h3 class="col-title">键位</h3>
+        <div class="key-list">
+          <div class="key-row"><span class="key-role">P1 移动</span><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></div>
+          <div class="key-row"><span class="key-role">P1 开火</span><span class="keys"><kbd>J</kbd><span class="key-or">/</span><kbd>空格</kbd></span></div>
+          <div class="key-row"><span class="key-role">P2 移动</span><span class="keys"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span></div>
+          <div class="key-row"><span class="key-role">P2 开火</span><span class="keys"><kbd>K</kbd><span class="key-or">/</span><kbd>小键盘 0</kbd></span></div>
+          <div class="key-row"><span class="key-role">暂停</span><span class="keys"><kbd>P</kbd><span class="key-or">/</span><kbd>Esc</kbd></span></div>
+          <div class="key-row"><span class="key-role">切换视角</span><span class="keys"><kbd>C</kbd></span></div>
+          <div class="key-row"><span class="key-role">静音</span><span class="keys"><kbd>M</kbd></span></div>
+          <div class="key-row"><span class="key-role">确认</span><span class="keys"><kbd>Enter</kbd></span></div>
+        </div>
+      </div>
+
+      <div class="help-col">
+        <h3 class="col-title">六种道具</h3>
+        <ul class="codex" id="help-powerup-list"></ul>
+      </div>
+    </div>
+
+    <footer class="panel-foot">
+      <button type="button" class="btn" id="help-back">返回</button>
+      <span class="hint">Esc 或点击空白处返回</span>
+    </footer>
+  </div>
+</section>
+
+<!-- =========================== SETTINGS =========================== -->
+<section id="screen-settings" class="screen overlay" aria-hidden="true">
+  <div class="panel settings-panel" role="dialog" aria-modal="true" aria-label="设置">
+    <header class="panel-head">
+      <div>
+        <h2 class="panel-title">设置</h2>
+        <span class="panel-sub">SETTINGS</span>
+      </div>
+      <span class="panel-rule" aria-hidden="true"></span>
+    </header>
+
+    <div class="settings-rows" id="settings-rows">
+      <div class="set-row" data-key="master" data-type="slider">
+        <label class="set-label" for="set-master">主音量</label>
+        <input class="slider" type="range" id="set-master" min="0" max="100" step="1" value="80" aria-label="主音量">
+        <span class="set-val" id="set-master-val">80</span>
+      </div>
+      <div class="set-row" data-key="music" data-type="slider">
+        <label class="set-label" for="set-music">音乐</label>
+        <input class="slider" type="range" id="set-music" min="0" max="100" step="1" value="60" aria-label="音乐音量">
+        <span class="set-val" id="set-music-val">60</span>
+      </div>
+      <div class="set-row" data-key="sfx" data-type="slider">
+        <label class="set-label" for="set-sfx">音效</label>
+        <input class="slider" type="range" id="set-sfx" min="0" max="100" step="1" value="80" aria-label="音效音量">
+        <span class="set-val" id="set-sfx-val">80</span>
+      </div>
+      <div class="set-row" data-key="quality" data-type="seg">
+        <span class="set-label">画质</span>
+        <div class="seg" id="set-quality" role="group" aria-label="画质">
+          <button type="button" class="seg-btn active" data-value="high" aria-pressed="true">高</button>
+          <button type="button" class="seg-btn" data-value="medium" aria-pressed="false">中</button>
+          <button type="button" class="seg-btn" data-value="low" aria-pressed="false">低</button>
+        </div>
+      </div>
+      <div class="set-row" data-key="view" data-type="seg">
+        <span class="set-label">视角</span>
+        <div class="seg" id="set-view" role="group" aria-label="视角">
+          <button type="button" class="seg-btn active" data-value="follow" aria-pressed="true">跟随</button>
+          <button type="button" class="seg-btn" data-value="classic" aria-pressed="false">经典</button>
+        </div>
+      </div>
+      <div class="set-row" data-key="scanline" data-type="toggle">
+        <span class="set-label">扫描线</span>
+        <button type="button" class="toggle" id="set-scanline" role="switch" aria-checked="true" aria-label="扫描线开关">
+          <span class="toggle-track" aria-hidden="true"><span class="toggle-knob"></span></span>
+          <span class="toggle-text">开</span>
+        </button>
+      </div>
+      <div class="set-row" data-key="shake" data-type="toggle">
+        <span class="set-label">震屏</span>
+        <button type="button" class="toggle" id="set-shake" role="switch" aria-checked="true" aria-label="震屏开关">
+          <span class="toggle-track" aria-hidden="true"><span class="toggle-knob"></span></span>
+          <span class="toggle-text">开</span>
+        </button>
+      </div>
+    </div>
+
+    <footer class="panel-foot">
+      <button type="button" class="btn" id="settings-back">返回</button>
+      <span class="hint">↑↓ 选择 · ←→ 调整 · Esc 返回</span>
+    </footer>
+  </div>
+</section>
+
+<!-- ============================ INTRO ============================= -->
+<section id="screen-intro" class="screen" aria-hidden="true">
+  <div class="intro-curtain intro-curtain-top" aria-hidden="true"></div>
+  <div class="intro-curtain intro-curtain-bottom" aria-hidden="true"></div>
+  <div class="intro-content">
+    <span class="intro-kicker">STAGE</span>
+    <span class="intro-num" id="intro-stage">1</span>
+  </div>
+</section>
+
+<!-- ============================ PAUSED ============================ -->
+<section id="screen-pause" class="screen overlay" aria-hidden="true">
+  <div class="pause-wrap">
+    <div class="pause-head">
+      <span class="pause-title">暂停</span>
+      <span class="pause-sub">PAUSED</span>
+    </div>
+    <nav class="menu pause-menu" id="pause-menu" aria-label="暂停菜单">
+      <button type="button" class="menu-item" data-action="resume">
+        <span class="cursor" aria-hidden="true">▶</span>
+        <span class="menu-label">继续游戏</span>
+        <span class="menu-en">RESUME</span>
+      </button>
+      <button type="button" class="menu-item" data-action="restart">
+        <span class="cursor" aria-hidden="true">▶</span>
+        <span class="menu-label">重新开始</span>
+        <span class="menu-en">RESTART</span>
+      </button>
+      <button type="button" class="menu-item" data-action="settings">
+        <span class="cursor" aria-hidden="true">▶</span>
+        <span class="menu-label">设置</span>
+        <span class="menu-en">SETTINGS</span>
+      </button>
+      <button type="button" class="menu-item" data-action="toTitle">
+        <span class="cursor" aria-hidden="true">▶</span>
+        <span class="menu-label">返回标题</span>
+        <span class="menu-en">TITLE</span>
+      </button>
+    </nav>
+    <p class="hint">↑↓ 选择 · Enter 确认 · Esc 继续</p>
+  </div>
+</section>
+
+<!-- ============================= TALLY ============================ -->
+<section id="screen-tally" class="screen overlay" aria-hidden="true">
+  <div class="panel tally-panel" id="tally-panel" role="dialog" aria-modal="true" aria-label="本关结算">
+    <header class="panel-head">
+      <div>
+        <h2 class="panel-title">本关结算</h2>
+        <span class="panel-sub">STAGE CLEAR</span>
+      </div>
+      <span class="panel-rule" aria-hidden="true"></span>
+    </header>
+
+    <ul class="tally-rows">
+      <li class="tally-row" data-type="basic" style="--i:0">
+        <span class="tally-ico" aria-hidden="true"></span>
+        <span class="tally-name">基础坦克</span>
+        <span class="tally-count">×<span data-count>0</span></span>
+        <span class="tally-points" data-points>0</span>
+      </li>
+      <li class="tally-row" data-type="fast" style="--i:1">
+        <span class="tally-ico" aria-hidden="true"></span>
+        <span class="tally-name">快速坦克</span>
+        <span class="tally-count">×<span data-count>0</span></span>
+        <span class="tally-points" data-points>0</span>
+      </li>
+      <li class="tally-row" data-type="power" style="--i:2">
+        <span class="tally-ico" aria-hidden="true"></span>
+        <span class="tally-name">强化坦克</span>
+        <span class="tally-count">×<span data-count>0</span></span>
+        <span class="tally-points" data-points>0</span>
+      </li>
+      <li class="tally-row" data-type="armor" style="--i:3">
+        <span class="tally-ico" aria-hidden="true"></span>
+        <span class="tally-name">装甲坦克</span>
+        <span class="tally-count">×<span data-count>0</span></span>
+        <span class="tally-points" data-points>0</span>
+      </li>
+    </ul>
+
+    <div class="tally-extra">
+      <span class="tally-extra-label">过关奖励</span>
+      <span class="tally-extra-value" id="tally-bonus">+0</span>
+    </div>
+    <div class="tally-total">
+      <span class="tally-total-label">本关得分</span>
+      <span class="tally-total-value" id="tally-total">0000000</span>
+    </div>
+
+    <div class="tally-foot">
+      <button type="button" class="btn tally-next" id="tally-next">继续</button>
+      <span class="hint">Enter 继续</span>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== GAME OVER ========================== -->
+<section id="screen-gameover" class="screen overlay gameover-screen" aria-hidden="true">
+  <div class="gameover-wrap">
+    <h2 class="gameover-title">GAME OVER</h2>
+    <p class="gameover-cn">游戏结束</p>
+    <div class="gameover-stats">
+      <div class="go-stat">
+        <span class="go-label">SCORE</span>
+        <span class="go-value" id="go-score">0000000</span>
+      </div>
+      <div class="go-stat">
+        <span class="go-label">HI-SCORE</span>
+        <span class="go-value" id="go-hiscore">0000000</span>
+      </div>
+      <div class="go-stat">
+        <span class="go-label">STAGE</span>
+        <span class="go-value" id="go-stage">1</span>
+      </div>
+    </div>
+    <div class="gameover-foot">
+      <button type="button" class="btn" id="gameover-back">返回标题</button>
+      <span class="hint">Enter 返回标题</span>
+    </div>
+  </div>
+</section>

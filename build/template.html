@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>坦克大战 3D · BATTLE CITY 3D</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230b0d12'/%3E%3Crect x='10' y='28' width='44' height='18' rx='4' fill='%23ffb02e'/%3E%3Crect x='22' y='16' width='20' height='14' rx='3' fill='%23ffd23f'/%3E%3Crect x='44' y='21' width='16' height='5' rx='2' fill='%23ffcf5e'/%3E%3C/svg%3E">
+<!-- 可选字体 CDN：全部带系统回退（规格书 §0/§7） -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+__CSS__
+</style>
+<style>
+/* 启动/加载失败友好页（规格书 §1/§8：缺 CDN / 无 WebGL 时明确提示，不白屏） */
+#fatal-error{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999;
+  background:radial-gradient(circle at 50% 35%,#1a1d24,#07080b 70%);font-family:"Noto Sans SC",system-ui,sans-serif;color:#f2ead8;}
+#fatal-error.show{display:flex;}
+#fatal-error .fatal-box{max-width:520px;padding:28px 32px;border:1px solid rgba(255,255,255,.12);border-radius:12px;
+  background:rgba(12,14,18,.9);box-shadow:0 18px 60px rgba(0,0,0,.6);text-align:center;}
+#fatal-error h1{font-size:20px;letter-spacing:.18em;color:#ffb02e;margin:0 0 14px;}
+#fatal-error .fatal-msg{font-size:14px;line-height:1.8;margin:0 0 12px;color:#f2ead8;}
+#fatal-error .fatal-hint{font-size:12px;line-height:1.7;color:#9aa3ad;margin:0;}
+</style>
+</head>
+<body>
+<div id="app">
+__BODY__
+</div>
+<div id="fatal-error" role="alert">
+  <div class="fatal-box">
+    <h1>无法启动游戏</h1>
+    <p class="fatal-msg">正在加载……</p>
+    <p class="fatal-hint">本作依赖 Three.js CDN（unpkg.com）。若网络不可达，请检查网络后刷新；也可确认浏览器已开启 WebGL / 硬件加速。</p>
+  </div>
+</div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+__SCRIPT__
+</script>
+<script>
+// 模块加载/运行失败兜底：CDN 缺失或脚本异常时给出明确错误页，而不是白屏
+(function () {
+  function show(msg) {
+    var el = document.getElementById('fatal-error');
+    if (!el) return;
+    var m = el.querySelector('.fatal-msg');
+    if (m) m.textContent = msg;
+    el.classList.add('show');
+  }
+  setTimeout(function () {
+    if (!window.__BC3D_BOOTED__) {
+      show('Three.js CDN 加载失败或网络不可用。请检查网络连接后刷新页面。');
+    }
+  }, 9000);
+  window.addEventListener('error', function (ev) {
+    if (ev && ev.message) show('运行错误：' + ev.message);
+  });
+})();
+</script>
+</body>
+</html>
